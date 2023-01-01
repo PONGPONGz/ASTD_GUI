@@ -3348,7 +3348,7 @@ autofarm_tab:Toggle("Auto buff (erwin & merlin)", e1, function(bool)
 			end
 	
 			debug("\nErwin: "..tostring(#erwins).." Merlin: "..tostring(#merlin))
-			while #erwins < 4 and #merlin < 2 do
+			while #erwins < 4 or #merlin < 2 do
 				debug("Inappropriate number/level of erwins and merlins waiting for more towers")
 				wait(10)
 				erwins, merlin = {}, {}
