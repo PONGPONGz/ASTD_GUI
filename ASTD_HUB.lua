@@ -3271,6 +3271,22 @@ local function GetTowerAtPosition(tower_name, position)
 	return tower
 end
 
+local function GetOwnTowersPlaced()
+	local towers = {}
+	if is_ingame then
+		for i,v in ipairs(game.Workspace.Unit:GetChildren()) do
+			if tostring(v.Owner.Value) == LocalPlayer.Name and not exist(towers, v.Name) then	
+				table.insert(towers, v.Name)
+			end
+		end
+	end
+
+	return towers
+end
+
+local function UpgradeTower(tower)
+	game.ReplicatedStorage.Remotes.Server:InvokeServer("Upgrade", tower)
+end
 
 if not isfolder(RECORD_FOLDER_NAME) then
 	makefolder(RECORD_FOLDER_NAME)
@@ -3302,6 +3318,7 @@ autofarm_tab:Toggle("Auto vote extreme", is_auto_voting_extreme, function(bool)
 	save_settings()
 end)
 
+-- TODO: TEST เปิดค้่างไว้
 autofarm_tab:Toggle("Auto buff (erwin & merlin)", false, function(bool)
     e1 = bool
     if is_ingame and bool then
@@ -3417,49 +3434,45 @@ end)
 
 autofarm_tab:Seperator()
 
-do		-- Auto upgrade
-	local function LoadTowers()
-		local towers = {}
-		if is_ingame then
-			for i,v in ipairs(game.Workspace.Unit:GetChildren()) do
-				if tostring(v.Owner.Value) == LocalPlayer.Name and not exist(towers, v.Name) then	
-					table.insert(towers, v.Name)
-				end
-			end
-		end
+do		-- Auto upgrade	
+	local placed_towers = GetOwnTowersPlaced()
+	local auto_upgrade_selected_button, auto_upgrade_all_button
+	local selected_tower
 
-		return towers
-	end
-	
-	
-	local placed_towers = LoadTowers()
-	local selected_tower = nil
-	local dd = autofarm_tab:Dropdown("Auto upgrade tower", placed_towers, placed_towers[1], function(tower)
+	auto_upgrade_all_button = autofarm_tab:Toggle("Auto upgrade all towers", auto_upgrading_all, function(bool)
+		auto_upgrading_all = bool
+		if is_ingame and bool then
+			-- disable upgrade selected button
+			auto_upgrade_selected_button:toggle(false, true)
+			auto_upgrade_selected_button:set_disable(true)
+
+			coroutine.wrap(function()
+				while auto_upgrading_all do
+					for _, tower in ipairs(workspace.Unit:GetChildren()) do
+						if tower:FindFirstChild("Owner") and tostring(tower.Owner.Value) == LocalPlayer.Name and tower.UpgradeTag.Value < tower.MaxUpgradeTag.Value then
+							if LocalPlayer.Money.Value >= calculator.GetAddedStatsForNextUpgrade(tower):expect().Cost then
+								debug("[AutoUpgradeAll] Upgrading "..tower.Name)
+								UpgradeTower(tower)
+								wait(.5)
+								if not auto_upgrading_all then
+									return
+								end
+							end
+						end
+					end
+					wait(AUTO_UPGRADING_ALL_INTERVAL)
+				end
+			end)()
+		else
+			-- enable back upgrade selected button
+			auto_upgrade_selected_button:set_disable(false)
+		end
+		save_settings()
+	end)
+
+	local tower_selection_box = autofarm_tab:Dropdown("Auto upgrade tower", placed_towers, placed_towers[1], function(tower)
 		selected_tower = tower
 	end)
-	
-	game.Workspace.Unit.ChildAdded:Connect(function(c)
-		if is_ingame and c:WaitForChild("Owner") and tostring(c.Owner.Value) == LocalPlayer.Name then
-			if exist(placed_towers, c.Name) then
-				return
-			end
-
-			dd:Add(c.Name)
-			table.insert(placed_towers, c.Name)
-		end
-	end)
-	
-	game.Workspace.Unit.ChildRemoved:Connect(function(c)
-		if is_ingame and c:FindFirstChild("Owner") and tostring(c.Owner.Value) == LocalPlayer.Name then
-			dd:Clear()
-			placed_towers = LoadTowers()
-			for _, v in ipairs(placed_towers) do
-				dd:Add(v)
-			end
-		end
-	end)
-	
-	local auto_upgrade_selected_button, auto_upgrade_all_button
 
 	auto_upgrade_selected_button = autofarm_tab:Toggle("Auto upgrade selected tower", auto_upgrading_selected, function(bool)
 		auto_upgrading_selected = bool
@@ -3474,7 +3487,7 @@ do		-- Auto upgrade
 						for _, tower in ipairs(workspace.Unit:GetChildren()) do
 							if tower.Name == selected_tower and tower:FindFirstChild("Owner") and tostring(tower.Owner.Value) == LocalPlayer.Name and tower.UpgradeTag.Value < tower.MaxUpgradeTag.Value then
 								if LocalPlayer.Money.Value >= calculator.GetAddedStatsForNextUpgrade(tower):expect().Cost then
-									game.ReplicatedStorage.Remotes.Server:InvokeServer("Upgrade", tower);
+									UpgradeTower(tower)
 									wait(.5)
 									if not auto_upgrading_selected then
 										return
@@ -3491,35 +3504,25 @@ do		-- Auto upgrade
 		end
 	end)
 
-	auto_upgrade_all_button = autofarm_tab:Toggle("Auto upgrade all towers", auto_upgrading_all, function(bool)
-		auto_upgrading_all = bool
-		if is_ingame and bool then
-			-- disable upgrade selected button
-			auto_upgrade_selected_button:toggle(false, true)
-			auto_upgrade_selected_button:set_disable(true)
+	game.Workspace.Unit.ChildAdded:Connect(function(c)
+		if is_ingame and c:WaitForChild("Owner") and tostring(c.Owner.Value) == LocalPlayer.Name then
+			if exist(placed_towers, c.Name) then
+				return
+			end
 
-			coroutine.wrap(function()
-				while auto_upgrading_all do
-					for _, tower in ipairs(workspace.Unit:GetChildren()) do
-						if tower:FindFirstChild("Owner") and tostring(tower.Owner.Value) == LocalPlayer.Name and tower.UpgradeTag.Value < tower.MaxUpgradeTag.Value then
-							if LocalPlayer.Money.Value >= calculator.GetAddedStatsForNextUpgrade(tower):expect().Cost then
-								debug("[AutoUpgradeAll] Upgrading "..tower.Name)
-								game.ReplicatedStorage.Remotes.Server:InvokeServer("Upgrade", tower);
-								wait(.5)
-								if not auto_upgrading_all then
-									return
-								end
-							end
-						end
-					end
-					wait(AUTO_UPGRADING_ALL_INTERVAL)
-				end
-			end)()
-		else
-			-- enable back upgrade selected button
-			auto_upgrade_selected_button:set_disable(false)
+			tower_selection_box:Add(c.Name)
+			table.insert(placed_towers, c.Name)
 		end
-		save_settings()
+	end)
+	
+	game.Workspace.Unit.ChildRemoved:Connect(function(c)
+		if is_ingame and c:FindFirstChild("Owner") and tostring(c.Owner.Value) == LocalPlayer.Name then
+			tower_selection_box:Clear()
+			placed_towers = GetOwnTowersPlaced()
+			for _, v in ipairs(placed_towers) do
+				tower_selection_box:Add(v)
+			end
+		end
 	end)
 end
 
@@ -3550,7 +3553,7 @@ do		-- Game record
 		debug("record saved to "..tostring(game:GetService("ReplicatedStorage").Map.Value)..".json")
 	end
 
-	autofarm_tab:Toggle("Record gameplay", is_recording, function(enabled)
+	local record_gameplay_button = autofarm_tab:Toggle("Record gameplay", is_recording, function(enabled)
 		is_recording = enabled
 		if not enabled then
 			if #call > 0 then
@@ -3594,6 +3597,7 @@ do		-- Game record
 
 	game_metatable.__newindex = newcclosure(function(self, method, listener)
 		if is_ingame and is_auto_replaying and method == "OnClientInvoke" and self.Name == MAP_ENDED_CONTROLLER_NAME then
+			-- Return Values: false = return, true = replay, "story" = playnext
 			return newindex_original(self, method, function()
 				return true
 			end)
@@ -3694,3 +3698,5 @@ end)
 misc_tab:Toggle("Debug", debug, function(bool)
 	debug_enabled = bool
 end)
+
+syn.queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/PONGPONGz/ASTD_GUI/main/ASTD_HUB.lua'))()")
