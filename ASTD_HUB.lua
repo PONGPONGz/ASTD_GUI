@@ -3336,6 +3336,7 @@ autofarm_tab:Toggle("Auto buff (erwin & merlin)", e1, function(bool)
     e1 = bool
     if is_ingame and bool then
 		coroutine.wrap(function()
+			debug(tostring(e1))
 			local erwins, merlin = {}, {}
 			for i,v in ipairs(game.Workspace.Unit:GetChildren()) do
 				if v:FindFirstChild("Owner") and tostring(v.Owner.Value) == LocalPlayer.Name and v.UpgradeTag.Value == v.MaxUpgradeTag.Value then
@@ -3347,7 +3348,6 @@ autofarm_tab:Toggle("Auto buff (erwin & merlin)", e1, function(bool)
 				end
 			end
 	
-			debug("\nErwin: "..tostring(#erwins).." Merlin: "..tostring(#merlin))
 			while #erwins < 4 or #merlin < 2 do
 				debug("Inappropriate number/level of erwins and merlins waiting for more towers")
 				wait(10)
@@ -3362,6 +3362,7 @@ autofarm_tab:Toggle("Auto buff (erwin & merlin)", e1, function(bool)
 					end
 				end
 			end
+			debug("\nErwin: "..tostring(#erwins).." Merlin: "..tostring(#merlin))
 			debug("[Auto Buff (erwins & merlin)] Start")
 	
 			local isBuffing = false
