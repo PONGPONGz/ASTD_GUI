@@ -3318,6 +3318,7 @@ end)
 if is_ingame then
 	require(game:GetService("ReplicatedStorage").Framework.RemoteInput).Connect("VoteGameMode", function()
 		if is_auto_voting_extreme then
+			debug("Voted for extreme")
 			remote:FireServer('VoteGameMode', 'Extreme')
 		end
 	end)
