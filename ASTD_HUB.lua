@@ -3335,22 +3335,8 @@ end
 autofarm_tab:Toggle("Auto buff (erwin & merlin)", e1, function(bool)
     e1 = bool
     if is_ingame and bool then
-        local erwins, merlin = {}, {}
-		for i,v in ipairs(game.Workspace.Unit:GetChildren()) do
-			if v:FindFirstChild("Owner") and tostring(v.Owner.Value) == LocalPlayer.Name and v.UpgradeTag.Value == v.MaxUpgradeTag.Value then
-				if v.Name == 'Erwin' then
-					table.insert(erwins, v)
-				elseif v.Name == 'Merlin' then
-					table.insert(merlin, v) 
-				end
-			end
-		end
-
-        debug("\nErwin: "..tostring(#erwins).." Merlin: "..tostring(#merlin))
-		while #erwins < 4 and #merlin < 2 do
-			debug("Inappropriate number/level of erwins and merlins waiting for more towers")
-			wait(10)
-			erwins, merlin = {}, {}
+		coroutine.wrap(function()
+			local erwins, merlin = {}, {}
 			for i,v in ipairs(game.Workspace.Unit:GetChildren()) do
 				if v:FindFirstChild("Owner") and tostring(v.Owner.Value) == LocalPlayer.Name and v.UpgradeTag.Value == v.MaxUpgradeTag.Value then
 					if v.Name == 'Erwin' then
@@ -3360,87 +3346,103 @@ autofarm_tab:Toggle("Auto buff (erwin & merlin)", e1, function(bool)
 					end
 				end
 			end
-		end
-		debug("[Auto Buff (erwins & merlin)] Start")
-
-        local isBuffing = false
-        
-        local function e(arg)
-           if not e1 then return end
-           isBuffing = true
-           coroutine.wrap(function()
-				for i=1,3 do
-					debug("Firing SpecialMove for "..arg.Name)
-					remote:FireServer('UseSpecialMove', arg)
-					wait(.1)
+	
+			debug("\nErwin: "..tostring(#erwins).." Merlin: "..tostring(#merlin))
+			while #erwins < 4 and #merlin < 2 do
+				debug("Inappropriate number/level of erwins and merlins waiting for more towers")
+				wait(10)
+				erwins, merlin = {}, {}
+				for i,v in ipairs(game.Workspace.Unit:GetChildren()) do
+					if v:FindFirstChild("Owner") and tostring(v.Owner.Value) == LocalPlayer.Name and v.UpgradeTag.Value == v.MaxUpgradeTag.Value then
+						if v.Name == 'Erwin' then
+							table.insert(erwins, v)
+						elseif v.Name == 'Merlin' then
+							table.insert(merlin, v) 
+						end
+					end
 				end
-           end)()
-           isBuffing = false
-        end
-          
-        e(erwins[1])
-        wait(1)
-        e(merlin[1])
-        wait(1)
-        
-        e(erwins[2])
-        wait(5)
-        
-        while erwins[4].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
-           wait() 
-        end
-        wait(1)
-        
-        
-        e(erwins[3])
-        wait(2)
-        e(merlin[2])
-        wait(2)
-        while erwins[3].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
-           wait() 
-        end
-        
-        e(erwins[4])
-
-        while erwins[4].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
-           wait()
-        end
-        wait(1)
-        
-        local lc = tick()
-        while e1 do
-            e(erwins[1])
-            wait(1)
-            e(merlin[1])
-            wait(2)
-            while erwins[1].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
-               wait()
-            end
-            wait(2)
-        
-            e(erwins[2])
-            wait(2)
-            while erwins[2].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
-               wait()
-            end
-            wait(2)
-        
-            e(erwins[3])
-            wait(1)
-            e(merlin[2])
-            wait(2)
-            while erwins[3].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
-               wait()
-            end
-            wait(2)
-        
-            e(erwins[4])
-            wait(2)
-            while erwins[4].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
-               wait()
-            end
-            wait(1)
-        end
+			end
+			debug("[Auto Buff (erwins & merlin)] Start")
+	
+			local isBuffing = false
+			
+			local function e(arg)
+			   if not e1 then return end
+			   isBuffing = true
+			   coroutine.wrap(function()
+					for i=1,3 do
+						debug("Firing SpecialMove for "..arg.Name)
+						remote:FireServer('UseSpecialMove', arg)
+						wait(.1)
+					end
+			   end)()
+			   isBuffing = false
+			end
+			  
+			e(erwins[1])
+			wait(1)
+			e(merlin[1])
+			wait(1)
+			
+			e(erwins[2])
+			wait(5)
+			
+			while erwins[4].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
+			   wait() 
+			end
+			wait(1)
+			
+			
+			e(erwins[3])
+			wait(2)
+			e(merlin[2])
+			wait(2)
+			while erwins[3].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
+			   wait() 
+			end
+			
+			e(erwins[4])
+	
+			while erwins[4].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
+			   wait()
+			end
+			wait(1)
+			
+			local lc = tick()
+			while e1 do
+				e(erwins[1])
+				wait(1)
+				e(merlin[1])
+				wait(2)
+				while erwins[1].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
+				   wait()
+				end
+				wait(2)
+			
+				e(erwins[2])
+				wait(2)
+				while erwins[2].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
+				   wait()
+				end
+				wait(2)
+			
+				e(erwins[3])
+				wait(1)
+				e(merlin[2])
+				wait(2)
+				while erwins[3].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
+				   wait()
+				end
+				wait(2)
+			
+				e(erwins[4])
+				wait(2)
+				while erwins[4].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
+				   wait()
+				end
+				wait(1)
+			end
+		end)()
     end
 	save_settings()
 end)
