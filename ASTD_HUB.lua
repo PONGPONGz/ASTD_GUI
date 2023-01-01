@@ -3175,6 +3175,7 @@ local auto_upgrading_selected = false
 local auto_upgrading_all 	  = false
 local is_auto_voting_extreme  = false
 local e1					  = false
+local brook_auto_buffing	  = false
 
 local is_loaded = false
 local is_ingame = not game:GetService("ReplicatedStorage"):WaitForChild("Lobby").Value
@@ -3205,7 +3206,8 @@ local function save_settings()
 		play_record 	 = is_record_playing,
 		anti_afk 		 = anti_afk,
 		auto_upgrade_all = auto_upgrade_all,
-		auto_buff 		 = e1,
+		auto_buff_1 	 = e1,
+		auto_buff_2		 = brook_auto_buffing,
 		auto_extreme	 = is_auto_voting_extreme
 	}
 
@@ -3235,8 +3237,12 @@ local function load_settings()
 		auto_upgrade_all = data.auto_upgrade_all
 	end
 
-	if data.auto_buff ~= nil then
-		e1 = data.auto_buff
+	if data.auto_buff_1 ~= nil then
+		e1 = data.auto_buff_1
+	end
+
+	if data.auto_buff_2 ~= nil then
+		brook_auto_buffing = data.auto_buff_2
 	end
 
 	if data.auto_extreme ~= nil then
@@ -3326,12 +3332,12 @@ end
 
 
 -- TODO: TEST เปิดค้่างไว้
-autofarm_tab:Toggle("Auto buff (erwin & merlin)", false, function(bool)
+autofarm_tab:Toggle("Auto buff (erwin & merlin)", e1, function(bool)
     e1 = bool
     if is_ingame and bool then
         local erwins, merlin = {}, {}
 		for i,v in ipairs(game.Workspace.Unit:GetChildren()) do
-			if v:FindFirstChild("Owner") and tostring(v.Owner.Value) == LocalPlayer.Name then
+			if v:FindFirstChild("Owner") and tostring(v.Owner.Value) == LocalPlayer.Name and v.UpgradeTag.Value == v.MaxUpgradeTag.Value then
 				if v.Name == 'Erwin' then
 					table.insert(erwins, v)
 				elseif v.Name == 'Merlin' then
@@ -3342,11 +3348,11 @@ autofarm_tab:Toggle("Auto buff (erwin & merlin)", false, function(bool)
 
         debug("\nErwin: "..tostring(#erwins).." Merlin: "..tostring(#merlin))
 		while #erwins < 4 and #merlin < 2 do
-			debug("Unappropriate number of erwins and merlins waiting for more towers")
+			debug("Inappropriate number/level of erwins and merlins waiting for more towers")
 			wait(10)
 			erwins, merlin = {}, {}
 			for i,v in ipairs(game.Workspace.Unit:GetChildren()) do
-				if v:FindFirstChild("Owner") and tostring(v.Owner.Value) == LocalPlayer.Name then
+				if v:FindFirstChild("Owner") and tostring(v.Owner.Value) == LocalPlayer.Name and v.UpgradeTag.Value == v.MaxUpgradeTag.Value then
 					if v.Name == 'Erwin' then
 						table.insert(erwins, v)
 					elseif v.Name == 'Merlin' then
@@ -3436,6 +3442,11 @@ autofarm_tab:Toggle("Auto buff (erwin & merlin)", false, function(bool)
             wait(1)
         end
     end
+	save_settings()
+end)
+
+autofarm_tab:Toggle("Auto buff (brook)", brook_auto_buffing, function(bool)
+	brook_auto_buffing = bool
 	save_settings()
 end)
 
