@@ -3312,11 +3312,17 @@ end)
 
 autofarm_tab:Toggle("Auto vote extreme", is_auto_voting_extreme, function(bool)
 	is_auto_voting_extreme = bool
-	if is_ingame and bool then
-		remote:FireServer('VoteGameMode', 'Extreme')
-	end
 	save_settings()
 end)
+
+if is_ingame then
+	require(game:GetService("ReplicatedStorage").Framework.RemoteInput).Connect("VoteGameMode", function()
+		if is_auto_voting_extreme then
+			remote:FireServer('VoteGameMode', 'Extreme')
+		end
+	end)
+end
+
 
 -- TODO: TEST เปิดค้่างไว้
 autofarm_tab:Toggle("Auto buff (erwin & merlin)", false, function(bool)
