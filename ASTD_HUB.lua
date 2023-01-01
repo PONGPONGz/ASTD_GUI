@@ -3542,7 +3542,7 @@ do		-- Game record
 
 	local call = {}
 
-	local function save_recorded_gameplay()			-- TODO: call on wave ended
+	local function save_recorded_gameplay()
 		local unit_used = {}
 		for i, v in pairs(call) do
 			if not exist(unit_used, v.info.Unit) then
@@ -3644,11 +3644,10 @@ do		-- Game record
 							debug("tower not found")
 						end
 					elseif current_queue.action == "ChangePriority" then
-						debug("Changing priority "..current_queue.info.Unit)
-
 						local tower = GetTowerAtPosition(current_queue.info.Unit, current_queue.info.cframe.Position)
 						if tower then
 							remote:FireServer(current_queue.action, tower)
+							action_queue = action_queue + 1
 						else
 							debug("tower not found")
 						end
