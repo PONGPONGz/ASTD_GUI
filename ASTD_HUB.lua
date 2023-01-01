@@ -3180,6 +3180,7 @@ local brook_auto_buffing	  = false
 local is_loaded = false
 local is_ingame = not game:GetService("ReplicatedStorage"):WaitForChild("Lobby").Value
 
+local match_start_timestamp = os.time()
 
 local gui = DiscordLib
 local window = gui:Window("All star tower defense")
@@ -3294,6 +3295,14 @@ local function UpgradeTower(tower)
 	game.ReplicatedStorage.Remotes.Server:InvokeServer("Upgrade", tower)
 end
 
+local function SetSpeedUp(state)
+	remote:FireServer("SpeedChange", state)
+end
+
+local function GetTimePassed()
+	return os.time() - match_start_timestamp
+end
+
 if not isfolder(RECORD_FOLDER_NAME) then
 	makefolder(RECORD_FOLDER_NAME)
 end
@@ -3311,7 +3320,7 @@ end)
 autofarm_tab:Toggle("Auto X2", is_auto_timelapsing, function(bool)
 	is_auto_timelapsing = bool
 	if is_ingame and bool then
-		remote:FireServer("SpeedChange", true)
+		SetSpeedUp(true)
 	end
 	save_settings()
 end)
@@ -3330,13 +3339,10 @@ if is_ingame then
 	end)
 end
 
-
--- TODO: TEST เปิดค้่างไว้
 autofarm_tab:Toggle("Auto buff (erwin & merlin)", e1, function(bool)
     e1 = bool
     if is_ingame and bool then
 		coroutine.wrap(function()
-			debug(tostring(e1))
 			local erwins, merlin = {}, {}
 			for i,v in ipairs(game.Workspace.Unit:GetChildren()) do
 				if v:FindFirstChild("Owner") and tostring(v.Owner.Value) == LocalPlayer.Name and v.UpgradeTag.Value == v.MaxUpgradeTag.Value then
@@ -3349,7 +3355,7 @@ autofarm_tab:Toggle("Auto buff (erwin & merlin)", e1, function(bool)
 			end
 	
 			while #erwins < 4 or #merlin < 2 do
-				debug("Inappropriate number/level of erwins and merlins waiting for more towers")
+				debug("Inappropriate number/level of erwins or merlins waiting for more towers")
 				wait(10)
 				erwins, merlin = {}, {}
 				for i,v in ipairs(game.Workspace.Unit:GetChildren()) do
@@ -3372,7 +3378,6 @@ autofarm_tab:Toggle("Auto buff (erwin & merlin)", e1, function(bool)
 			   isBuffing = true
 			   coroutine.wrap(function()
 					for i=1,3 do
-						debug("Firing SpecialMove for "..arg.Name)
 						remote:FireServer('UseSpecialMove', arg)
 						wait(.1)
 					end
@@ -3409,7 +3414,6 @@ autofarm_tab:Toggle("Auto buff (erwin & merlin)", e1, function(bool)
 			end
 			wait(1)
 			
-			local lc = tick()
 			while e1 do
 				e(erwins[1])
 				wait(1)
@@ -3418,14 +3422,14 @@ autofarm_tab:Toggle("Auto buff (erwin & merlin)", e1, function(bool)
 				while erwins[1].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
 				   wait()
 				end
-				wait(2)
+				wait(.5)
 			
 				e(erwins[2])
 				wait(2)
 				while erwins[2].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
 				   wait()
 				end
-				wait(2)
+				wait(.5)
 			
 				e(erwins[3])
 				wait(1)
@@ -3434,14 +3438,14 @@ autofarm_tab:Toggle("Auto buff (erwin & merlin)", e1, function(bool)
 				while erwins[3].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
 				   wait()
 				end
-				wait(2)
+				wait(.5)
 			
 				e(erwins[4])
 				wait(2)
 				while erwins[4].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
 				   wait()
 				end
-				wait(1)
+				wait(.5)
 			end
 		end)()
     end
@@ -3450,6 +3454,102 @@ end)
 
 autofarm_tab:Toggle("Auto buff (brook)", brook_auto_buffing, function(bool)
 	brook_auto_buffing = bool
+	if is_ingame and bool then
+		coroutine.wrap(function()
+			local brooks = {}
+			for i,v in ipairs(game.Workspace.Unit:GetChildren()) do
+				if v:FindFirstChild("Owner") and tostring(v.Owner.Value) == LocalPlayer.Name then
+					if v.Name == 'Brook6' then
+						table.insert(brooks, v)
+					end
+				end
+			end
+	
+			while #brooks < 4 do
+				debug("Inappropriate number/level of Brooks waiting for more towers")
+				wait(10)
+				brooks = {}
+				for i,v in ipairs(game.Workspace.Unit:GetChildren()) do
+					if v:FindFirstChild("Owner") and tostring(v.Owner.Value) == LocalPlayer.Name then
+						if v.Name == 'Brook6' then
+							table.insert(brooks, v)
+						end
+					end
+				end
+			end
+			debug("Brook: "..tostring(#brooks))
+			debug("[Auto Buff (brook)] Start")
+	
+			local isBuffing = false
+			local function e(arg)
+				if not brook_auto_buffing then return end
+				isBuffing = true
+				coroutine.wrap(function()
+					 for i=1,3 do
+						 remote:FireServer('UseSpecialMove', arg)
+						 wait(.1)
+					 end
+				end)()
+				isBuffing = false
+			 end
+			  
+			e(brooks[1])
+			wait(2)
+			
+			e(brooks[2])
+			wait(5)
+			
+			while brooks[4].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
+			   wait() 
+			end
+			wait(1)
+			
+			
+			e(brooks[3])
+			wait(4)
+			while brooks[3].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
+			   wait() 
+			end
+			
+			e(brooks[4])
+	
+			while brooks[4].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
+			   wait()
+			end
+			wait(1)
+			
+			while brook_auto_buffing do
+				e(brooks[1])
+				wait(3)
+				while brooks[1].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
+				   wait()
+				end
+				wait(1)
+			
+				e(brooks[2])
+				wait(2)
+				while brooks[2].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
+				   wait()
+				end
+				wait(1)
+			
+				e(brooks[3])
+				wait(3)
+				while brooks[3].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
+				   wait()
+				end
+				wait(1)
+			
+				e(brooks[4])
+				wait(2)
+				while brooks[4].Head.EffectBBGUI.Frame:FindFirstChild("AttackImage").visible do
+				   wait()
+				end
+				wait(1)
+			end
+		end)()
+    end
+
 	save_settings()
 end)
 
@@ -3559,7 +3659,7 @@ do		-- Game record
 	local function save_recorded_gameplay()
 		local unit_used = {}
 		for i, v in pairs(call) do
-			if not exist(unit_used, v.info.Unit) then
+			if v.info and not exist(unit_used, v.info.Unit) then
 				table.insert(unit_used, v.info.Unit)
 			end
 		end
@@ -3598,15 +3698,14 @@ do		-- Game record
 						copied_args[k] = v
 					end
 					copied_args.cframe = {copied_args.cframe:GetComponents()}
-					local data = {action = _action, info = copied_args}
-					table.insert(call, data)
-				elseif _action == "Upgrade" then
-					local data = {action = _action, info = {Unit = args.Name, cframe = {args.HumanoidRootPart.CFrame:GetComponents()}}}
-					table.insert(call, data)
-				elseif _action == "ChangePriority" then
-					debug(script.Name.." attempt to change priority args: "..args.Name)
-					local data = {action = _action, info = {Unit = args.Name, cframe = {args.HumanoidRootPart.CFrame:GetComponents()}}}
-					table.insert(call, data)
+					table.insert(call, {action = _action, info = copied_args})
+				elseif _action == "Upgrade" or _action == "ChangePriority" then
+					-- Uses same info
+					table.insert(call, {action = _action, info = {Unit = args.Name, cframe = {args.HumanoidRootPart.CFrame:GetComponents()}}})
+				elseif _action == "SpeedChange" then
+					debug("Speed changed inserting")
+					table.insert(call, {action = _action, state = args, time_passed_after_game_begin = GetTimePassed()})
+					debug("data added")
 				end
 
 				setnamecallmethod(method)
@@ -3665,6 +3764,14 @@ do		-- Game record
 						else
 							debug("tower not found")
 						end
+					elseif current_queue.action == "SpeedChange" then
+						local time_passed = GetTimePassed()
+						if time_passed >= current_queue.time_passed_after_game_begin then
+							SetSpeedUp(current_queue.state)
+							action_queue = action_queue + 1
+						else
+							debug("Waiting for "..tostring(current_queue.time_passed_after_game_begin - time_passed).." seconds to change game speed")
+						end
 					end
 
 					if action_queue > #actions then
@@ -3719,4 +3826,6 @@ misc_tab:Toggle("Debug", debug, function(bool)
 	debug_enabled = bool
 end)
 
+debug("queueing on teleport")
 syn.queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/PONGPONGz/ASTD_GUI/main/ASTD_HUB.lua'))()")
+debug("teleport queued")
