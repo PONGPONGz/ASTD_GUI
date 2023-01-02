@@ -1,16 +1,18 @@
-while not game or not game:GetService("Players") or not game:GetService("Players").LocalPlayer do
+local HttpService 		= game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players			= game:GetService("Players")
+
+while not game or not Players or not Players.LocalPlayer do
 	wait(1)
+	Players = game:GetService("Players")
 end
 
-local HttpService = game:GetService("HttpService")
-local LocalPlayer = game:GetService("Players").LocalPlayer
-if not LocalPlayer.Character then		-- wait until player loaded
-	LocalPlayer.CharacterAdded:Wait()
-end
+local LocalPlayer 		= Players.LocalPlayer
+local character	  		= LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()		-- wait until player loaded
 
-local remote = game.ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Input")
+local remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Input")
 
-local calculator = require(game.ReplicatedStorage.Framework.UI.UnitStatCalculation)
+local calculator = require(ReplicatedStorage.Framework.UI.UnitStatCalculation)
 local cached = require(LocalPlayer.Backpack.Framework.CachedStats)
 
 local DiscordLib = {}
@@ -405,26 +407,6 @@ do
 		UserInputService.InputBegan:Connect(function(io, p)
 			if io.KeyCode == Enum.KeyCode.RightControl then
 				MainFrame.Visible = not MainFrame.Visible
-				-- if settingsopened == true then
-				-- 	settingsopened = false
-				-- 	TopFrameHolder.Visible = true
-				-- 	ServersHoldFrame.Visible = true
-				-- 	SettingsHolder:TweenSize(UDim2.new(0, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .3, true)
-				-- 	TweenService:Create(
-				-- 		Settings,
-				-- 		TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-				-- 		{BackgroundTransparency = 1}
-				-- 	):Play()
-				-- 	for i,v in next, SettingsHolder:GetChildren() do
-				-- 		TweenService:Create(
-				-- 			v,
-				-- 			TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-				-- 			{BackgroundTransparency = 1}
-				-- 		):Play()
-				-- 	end
-				-- 	wait(.3)
-				-- 	SettingsFrame.Visible = false
-				-- end
 			end
 		end)
 
@@ -3169,7 +3151,7 @@ local is_auto_replaying 	  = false
 local is_auto_timelapsing 	  = false
 local is_recording 			  = false
 local is_record_playing 	  = false
-local debug_enabled 		  = true
+local debug_enabled 		  = false
 local anti_afk 				  = true
 local auto_upgrading_selected = false
 local auto_upgrading_all 	  = false
@@ -3178,7 +3160,7 @@ local e1					  = false
 local brook_auto_buffing	  = false
 
 local is_loaded = false
-local is_ingame = not game:GetService("ReplicatedStorage"):WaitForChild("Lobby").Value
+local is_ingame = not ReplicatedStorage:WaitForChild("Lobby").Value
 
 local match_start_timestamp = os.time()
 
@@ -3189,9 +3171,8 @@ local autofarm = window:Server("Auto Farm Section", "http://www.roblox.com/asset
 local webhook = window:Server("Discord Webhook", "http://www.roblox.com/asset/?id=11585480207")
 
 local autofarm_tab = autofarm:Channel("🤖 Auto Farm")
-local misc_tab = autofarm:Channel("🌎 Misc")
--- local slectworld = autofarm:Channel("🌎 Select World")
---local autoclngtab = autofarm:Channel("🎯 Auto Challenge")
+local misc_tab = autofarm:Channel("🎯 Misc")
+local teleport_tab = autofarm:Channel("🌎 Teleport")
 
 local function debug(message)
 	if debug_enabled then
@@ -3331,7 +3312,7 @@ autofarm_tab:Toggle("Auto vote extreme", is_auto_voting_extreme, function(bool)
 end)
 
 if is_ingame then
-	require(game:GetService("ReplicatedStorage").Framework.RemoteInput).Connect("VoteGameMode", function()
+	require(ReplicatedStorage.Framework.RemoteInput).Connect("VoteGameMode", function()
 		if is_auto_voting_extreme then
 			debug("Voted for extreme")
 			remote:FireServer('VoteGameMode', 'Extreme')
@@ -3670,8 +3651,8 @@ do		-- Game record
 		}
 
 		debug('writing '..tonumber(#call)..' actions to file')
-		writefile(RECORD_FOLDER_NAME.."\\"..tostring(game:GetService("ReplicatedStorage").Map.Value)..".json", HttpService:JSONEncode(record))
-		debug("record saved to "..tostring(game:GetService("ReplicatedStorage").Map.Value)..".json")
+		writefile(RECORD_FOLDER_NAME.."\\"..tostring(ReplicatedStorage.Map.Value)..".json", HttpService:JSONEncode(record))
+		debug("record saved to "..tostring(ReplicatedStorage.Map.Value)..".json")
 	end
 
 	local record_gameplay_button = autofarm_tab:Toggle("Record gameplay", is_recording, function(enabled)
@@ -3731,11 +3712,12 @@ do		-- Game record
 	autofarm_tab:Toggle("Play recorded gameplay", is_record_playing, function(enabled, control)
 		is_record_playing = enabled
 		if is_ingame and enabled then
-			-- remote:FireServer('VoteGameMode', 'Extreme')
-			actions = HttpService:JSONDecode(readfile(RECORD_FOLDER_NAME.."\\"..tostring(game:GetService("ReplicatedStorage").Map.Value)..".json")).actions
+			actions = HttpService:JSONDecode(readfile(RECORD_FOLDER_NAME.."\\"..tostring(ReplicatedStorage.Map.Value)..".json")).actions
 			-- convert cframe components to CFrame object
 			for _, v in ipairs(actions) do
-				v.info.cframe = CFrame.new(unpack(v.info.cframe))
+				if v.info then
+					v.info.cframe = CFrame.new(unpack(v.info.cframe))
+				end
 			end
 
 			coroutine.wrap(function()
@@ -3788,18 +3770,6 @@ do		-- Game record
 end
 
 
-misc_tab:Button("Training (World 2)", function()
-	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-	local hrp = character:WaitForChild('HumanoidRootPart')
-	hrp.CFrame = CFrame.new(-334.57251, 20007.9941, -23456.2578, 0.796513379, 6.46008544e-08, -0.604620874, -7.22322682e-08, 1, 1.16881189e-08, 0.604620874, 3.43633957e-08, 0.796513379)
-	wait()
-	character:WaitForChild("Humanoid"):MoveTo(Vector3.new(-326.715149, 20008.1953, -23465.3457))
-	wait(1)
-	remote:FireServer("InfiniteModeInfLevel", -98, false)
-	wait(1)
-	remote:FireServer("InfiniteModeStart")
-end)
-
 local anti_afk_connection
 misc_tab:Toggle("Anti-AFK", anti_afk, function(bool)
 	anti_afk = bool
@@ -3822,10 +3792,80 @@ misc_tab:Toggle("Anti-AFK", anti_afk, function(bool)
 	end
 end)
 
-misc_tab:Toggle("Debug", debug, function(bool)
-	debug_enabled = bool
-end)
+if LocalPlayer.Name == "PONGPONGzy" then
+	misc_tab:Toggle("Debug", debug, function(bool)
+		debug_enabled = bool
+	end)
+	
+	misc_tab:Button("Training (World 2)", function()
+		local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+		local hrp = character:WaitForChild('HumanoidRootPart')
+		hrp.CFrame = CFrame.new(-334.57251, 20007.9941, -23456.2578, 0.796513379, 6.46008544e-08, -0.604620874, -7.22322682e-08, 1, 1.16881189e-08, 0.604620874, 3.43633957e-08, 0.796513379)
+		wait()
+		character:WaitForChild("Humanoid"):MoveTo(Vector3.new(-326.715149, 20008.1953, -23465.3457))
+		wait(1)
+		remote:FireServer("InfiniteModeInfLevel", -98, false)
+		wait(1)
+		remote:FireServer("InfiniteModeStart")
+	end)
+end
+
+local touch_interest
+
+
+local function TeleportWorld()
+	firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, touch_interest, 1)
+	firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, touch_interest, 0)
+end
+
+if game:GetService("Workspace").Queue:FindFirstChild("Lobby World 2") then
+	-- [ WORLD 2 ] --
+	teleport_tab:Button("World 1", function()	
+		touch_interest =  game:GetService("Workspace").Queue.World1.World1
+		TeleportWorld()
+	end)
+
+	teleport_tab:Button("World 3", function()	
+		touch_interest = game:GetService("Workspace").Queue["Lobby World 2"].Walkway["W3Temp [DELETED AT RUNTIME]"].Gate.ToriiGate.Teleporter
+		TeleportWorld()
+	end)
+
+	teleport_tab:Button("Infinite", function()
+		character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(116, 144.84996, -0.287, 1, 0, 0, 0, 1, 0, 0, 0, 1)
+	end)
+elseif game:GetService("Workspace").Queue:FindFirstChild("World3Lobby") then
+	-- [ WORLD 3 ] --
+	teleport_tab:Button("World 1", function()	
+		touch_interest = game:GetService("Workspace").Queue.World1.Teleporter
+		TeleportWorld()
+	end)
+	teleport_tab:Button("World 2", function()	
+		touch_interest = game:GetService("Workspace").Queue.World2.Teleporter
+		TeleportWorld()
+	end)
+else
+	-- [ WORLD 1 ] --
+	teleport_tab:Button("World 2", function()	
+		touch_interest = game:GetService("Workspace").Queue.World2.World2
+		TeleportWorld()
+	end)
+
+	teleport_tab:Button("World 3", function()	
+		touch_interest = game:GetService("Workspace").Queue.World3PortalArea.Gate.ToriiGate.Teleporter
+		TeleportWorld()
+	end)
+
+	teleport_tab:Button("Infinite", function()
+		character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(-141.999817, 1391.00696, 842.667969, 0.999589324, 5.9320221e-10, -0.0286559723, -1.38949408e-09, 1, -2.77680776e-08, 0.0286559723, 2.77964904e-08, 0.999589324)
+	end)
+end
 
 debug("queueing on teleport")
 syn.queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/PONGPONGz/ASTD_GUI/main/ASTD_HUB.lua'))()")
 debug("teleport queued")
+
+
+
+
+
+
