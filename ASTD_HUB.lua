@@ -3147,7 +3147,7 @@ local AUTO_UPGRADING_SELECTED_INTERVAL  = 1.5
 local AUTO_UPGRADING_ALL_INTERVAL 		= 1.5
 local RECORD_PLAYBACK_INTERVAL 			= 1.5
 
-local VERSION = "1.0.1"
+local VERSION = "1.0.2"
 
 local is_auto_replaying 	  = false
 local is_auto_timelapsing 	  = false
@@ -3767,24 +3767,24 @@ do		-- Game record
 						end
 					elseif current_queue.action == "CashOut" then
 						local current_wave = ReplicatedStorage:FindFirstChild("WaveValue")
-						local octo_instance
-						for _, v in ipairs(workspace.Unit:GetChildren()) do
-							if v:FindFirstChild("Owner") and tostring(v.Owner.Value) == LocalPlayer.Name and v.Name == "W3Octo" then
-								octo_instance = v
-								break
+						if current_wave and current_wave.Value >= current_queue.wave then
+							local octo_instance
+							for _, v in ipairs(workspace.Unit:GetChildren()) do
+								if v:FindFirstChild("Owner") and tostring(v.Owner.Value) == LocalPlayer.Name and v.Name == "W3Octo" then
+									octo_instance = v
+									break
+								end
 							end
-						end
 
-						if octo_instance then
-							if current_wave and current_wave.Value >= current_queue.wave then
+							if octo_instance then
 								debug("cashing out (delaying by 5)")
 								delay(5, function()
 									remote:FireServer("UseSpecialMove", octo_instance)
 								end)
 								action_queue = action_queue + 1
+							else
+								debug("Octo is not found in map")
 							end
-						else
-							debug("Octo is not found in map")
 						end
 					end
 
