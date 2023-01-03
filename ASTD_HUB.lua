@@ -3147,7 +3147,7 @@ local AUTO_UPGRADING_SELECTED_INTERVAL  = 1.5
 local AUTO_UPGRADING_ALL_INTERVAL 		= 1.5
 local RECORD_PLAYBACK_INTERVAL 			= 1.5
 
-local VERSION = "1.0.0"
+local VERSION = "1.0.1"
 
 local is_auto_replaying 	  = false
 local is_auto_timelapsing 	  = false
@@ -3775,7 +3775,7 @@ do		-- Game record
 							end
 						end
 
-						if octo_instace then
+						if octo_instance then
 							if current_wave and current_wave.Value >= current_queue.wave then
 								debug("cashing out (delaying by 5)")
 								delay(5, function()
