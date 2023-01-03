@@ -3147,6 +3147,8 @@ local AUTO_UPGRADING_SELECTED_INTERVAL  = 1.5
 local AUTO_UPGRADING_ALL_INTERVAL 		= 1.5
 local RECORD_PLAYBACK_INTERVAL 			= 1.5
 
+local VERSION = "1.0.0"
+
 local is_auto_replaying 	  = false
 local is_auto_timelapsing 	  = false
 local is_recording 			  = false
@@ -3687,7 +3689,7 @@ do		-- Game record
 				elseif _action == "SpeedChange" then
 					debug("Speed changed")
 					table.insert(call, {action = _action, state = args, time_passed_after_game_begin = GetTimePassed()})
-				elseif _action == "UseSpecialMove" and  args.Name == "W3Octo" then
+				elseif _action == "UseSpecialMove" and args.Name == "W3Octo" then
 					debug("Cashed out")
 					table.insert(call, {action = "CashOut", wave = (ReplicatedStorage.WaveValue.Value or 0)})
 				end
@@ -3897,6 +3899,7 @@ debug("queueing on teleport")
 syn.queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/PONGPONGz/ASTD_GUI/main/ASTD_HUB.lua'))()")
 debug("teleport queued")
 
+debug("VERSION: "..tostring(VERSION))
 
 
 
